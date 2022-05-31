@@ -6,10 +6,11 @@ module.exports = {
   theme: {
     extend: {
       fontFamily: {
-        'Roboto': 'Roboto',
-        'Inter': 'Inter',
+        // Roboto: 'Roboto',
+        // Inter: 'Inter',
+        poppins: 'Poppins'
       }
+    },
   },
-},
   plugins: [],
 }

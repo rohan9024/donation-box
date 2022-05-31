@@ -1,60 +1,79 @@
-import React, { useState } from 'react'
+import React, { useState, useContext, useEffect } from 'react'
 import done from "../pages/assets/done.gif"
 import Image from 'next/image'
 import { db, storage } from "./firebase"
 import { getDownloadURL, ref, uploadBytesResumable } from 'firebase/storage';
-import { addDoc, collection } from 'firebase/firestore';
+import { addDoc, collection, doc, increment, updateDoc } from 'firebase/firestore';
+import { AuthContext } from '../Contexts/AuthContext';
+import { useRouter } from 'next/router';
 
 function organs() {
-  const [selectedImage, setSelectedImage] = useState(null);
   const [name, setName] = useState()
-  const [email, setEmail] = useState()
   const [contact, setContact] = useState()
-  const [submitted, setSubmitted] = useState(false);
-  const [progress, setProgress] = useState(0)
+  const [organ, setOrgan] = useState('')
 
-  function uploadFile(file) {
-    if (!file) return;
-    const storageRef = ref(storage, `/pickup/organs/${file.name}`);
-    const uploadTask = uploadBytesResumable(storageRef, file);
+  const { _donor, _setDonor } = useContext(AuthContext);
 
-    uploadTask.on('state_changed', (snapshot) => {
-      const progress = Math.round((snapshot.bytesTransferred / snapshot.totalBytes) * 100)
-    }, (err) => console.log(err),
-      () => {
-        console.log("Uploaded successfully")
-      }
-    )
+  const router = useRouter();
 
-    setProgress(progress);
+  useEffect(() => {
+    _donor ?
+      router.push("/organs")
+      : router.push("/components/Login");
 
-  }
-  const addDocument = async (name, email, contact) => {
+  }, [])
+
+
+  const addDocument = async (name, email, contact, organ) => {
     let timestamp = new Date().getTime();
 
     const docRef = await addDoc(collection(db, "pickup organs"), {
       name: name,
       email: email,
+      organ: organ,
       contact: contact,
       timestamp: timestamp
     });
   }
+
+
+
+  const updatePoints = async (id, points) => {
+    const ref = doc(db, "user", id);
+
+    // Atomically increment the population of the city by 50.
+    await updateDoc(ref, {
+      points: increment(points)
+    });
+  }
   const submit = (e) => {
-    e.preventDefault();
-    uploadFile(selectedImage);
-    addDocument(name, email, contact);
-    setSubmitted(true)
+    if (name && organ && contact) {
+      e.preventDefault();
+      addDocument(name, _donor.email, contact, organ);
+      updatePoints(_donor.id, 100)
+      alert('We will contact you soon.')
+      setContact("")
+      setName("")
+      setOrgan("")
+    }
+    else {
+      alert("Fill details properly")
+    }
   }
   return (
-    <div className='font-DMSans bg-gray-800 flex-1 h-screen w-screen flex flex-col justify-center items-center'>
-      {submitted ? (
-        <div className='text-gray-200 flex flex-col justify-center items-center'>
-          <Image src={done} alt="done" width={400} height={400}/>
+    <>
 
-          <h1 className='text-4xl mt-10'>You received 1000 points!</h1>
+
+
+      <div className='flex justify-center items-center bg-gray-800 font-poppins font-bold'>
+
+        <div className='flex justify-center items-center h-screen w-2/4'>
+          <Image src='https://media.istockphoto.com/vectors/vector-of-donor-human-organs-collected-for-transplantation-vector-id1217394305?b=1&k=20&m=1217394305&s=612x612&w=0&h=AogSstrbKGDtvMhdZ481c78tvFblrjjDvg4is36P4wo=' alt="backgroundImage" objectFit='contain' width={1000} height={1000} />
         </div>
-      )
-        : (
+
+
+        <div className='font-DMSans bg-gray-800 flex-1 h-screen w-screen flex flex-col justify-center items-center'>
+
           <div className='min-h-[200px] w-[450px] bg-purple-300 shadow-2xl border border-gray-500 rounded-lg flex flex-col justify-center items-center m-auto space-y-5 py-12 '>
             <h1 className='text-center text-3xl'>Donate Form</h1>
             <div class="flex justify-center">
@@ -82,38 +101,12 @@ function organs() {
                   "
                   placeholder="Bob Shawn Grepper"
                   onChange={(e) => setName(e.target.value)}
-                />
-              </div>
-            </div>
-            <div class="flex justify-center">
-              <div class="mb-3 xl:w-96">
-                <label class="form-label inline-block mb-2 text-gray-700"
-                >Email</label>
-                <input
-                  type="email"
-                  class="
-                  form-control
-                  block
-                  w-full
-                  px-3
-                  py-1.5
-                  text-base
-                  font-normal
-                  text-gray-700
-                  bg-white bg-clip-padding
-                  border border-solid border-gray-300
-                  rounded
-                  transition
-                  ease-in-out
-                  m-0
-                  focus:text-gray-700 focus:bg-white focus:border-blue-600 focus:outline-none
-                  "
-                  placeholder="bobgrepper45@gmail.com "
-                  onChange={(e) => setEmail(e.target.value)}
+                  value={name}
 
                 />
               </div>
             </div>
+
             <div class="flex justify-center">
               <div class="mb-3 xl:w-96">
                 <label class="form-label inline-block mb-2 text-gray-700"
@@ -138,34 +131,43 @@ function organs() {
                   focus:text-gray-700 focus:bg-white focus:border-blue-600 focus:outline-none
                   "
                   onChange={(e) => setContact(e.target.value)}
+                  placeholder="9137566728"
+                  value={contact}
 
                 />
               </div>
             </div>
             <div class="flex justify-center">
-              <div class="mb-3 w-96">
-                <label class="form-label inline-block mb-2 text-gray-700">Upload a photo of the organs</label>
-                <input class="form-control
-            block
-            w-full
-            px-3
-            py-1.5
-            text-base
-            font-normal
-            text-gray-700
-            bg-white bg-clip-padding
-            border border-solid border-gray-300
-            rounded
-            transition
-            ease-in-out
-            m-0
-          focus:text-gray-700 focus:bg-white focus:border-blue-600 focus:outline-none" type="file"
-                  onChange={(event) => {
-                    console.log(event.target.files[0]);
-                    setSelectedImage(event.target.files[0]);
-                  }} />
+              <div class="mb-3 xl:w-96">
+                <label class="form-label inline-block mb-2 text-gray-700"
+                >Enter the organ</label>
+                <input
+                  type="text"
+                  class="
+                  form-control
+                  block
+                  w-full
+                  px-3
+                  py-1.5
+                  text-base
+                  font-normal
+                  text-gray-700
+                  bg-white bg-clip-padding
+                  border border-solid border-gray-300
+                  rounded
+                  transition
+                  ease-in-out
+                  m-0
+                  focus:text-gray-700 focus:bg-white focus:border-blue-600 focus:outline-none
+                  "
+                  onChange={(e) => setOrgan(e.target.value)}
+                  placeholder="Liver, Kidney, etc"
+                  value={organ}
+
+                />
               </div>
             </div>
+
 
 
             <div className='bg-purple-500 hover:bg-purple-400 px-12 py-3 rounded-lg hover:cursor-pointer' onClick={submit}>
@@ -173,10 +175,10 @@ function organs() {
             </div>
 
           </div >
-        )
-      }
 
-    </div >
+        </div >
+      </div >
+    </>
 
   )
 }

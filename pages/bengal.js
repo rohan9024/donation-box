@@ -1,13 +1,26 @@
 import { addDoc, collection, getDocs } from 'firebase/firestore';
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useContext } from 'react'
 import { db } from './firebase';
 import { useRouter } from 'next/router'
+import { AuthContext } from '../Contexts/AuthContext';
 
 
 function bengal() {
-    const [name, setName] = useState()z
+    const [name, setName] = useState()
     const [amount, setAmount] = useState(0)
     const [contact, setContact] = useState()
+    const { _donor, _setDonor } = useContext(AuthContext);
+
+    const router = useRouter();
+
+
+    useEffect(() => {
+        _donor ?
+            router.push("/bengal")
+            : router.push("/components/Login");
+
+    }, [])
+
 
     const submit = (e) => {
         e.preventDefault();

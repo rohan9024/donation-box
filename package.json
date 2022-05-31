@@ -9,11 +9,16 @@
     "lint": "next lint"
   },
   "dependencies": {
+    "@headlessui/react": "^1.6.0",
+    "chart": "^0.1.2",
     "firebase": "^9.6.10",
+    "framer-motion": "^6.3.3",
     "next": "12.1.4",
     "next-auth": "^4.3.1",
     "react": "18.0.0",
-    "react-dom": "18.0.0"
+    "react-chartjs-2": "^4.1.0",
+    "react-dom": "18.0.0",
+    "react-modal": "^3.15.1"
   },
   "devDependencies": {
     "autoprefixer": "^10.4.4",
